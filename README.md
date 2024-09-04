@@ -3,6 +3,15 @@
 This is a socket server framework that is written in Go.
 The framework is a event-driven framework which you don't have to care about where to write code and when to execute code.
 
+# Installation
+
+Write this in go.mod
+```
+require (
+  github.com/sota70/socket_framework v0.0.1
+)
+```
+
 # How this framework works
 
 The framework consists of three elements.
@@ -15,7 +24,7 @@ Orchestrator is a class that manages all events, listeners and common states in 
 This framework has several pre-built events and listeners.
 For instance, ServerRecvMsgEvent.
 For example, the process that is receiving message from a client calls ServerRecvMsgEvent in the following code.
-```
+```go
 buf = make([]byte, max_buf_size)
 readLen, _, err = unix.Recvfrom(clientFd, buf, 0)
 
@@ -38,7 +47,7 @@ Finally, register events to Orchestrator with an event name.
 
 You can use pre-built events and listeners.
 Register them to Orchestrator in the following code.
-```
+```go
 package main
 
 import (
@@ -77,7 +86,7 @@ f.GetInstance().Register("recv_msg", &recvEvent)
 f.GetInstance().Register("input", &inputEvent)
 ```
 After you register them, run the server with following code.
-```
+```go
 var host [4]byte = [4]byte{127, 0, 0, 1}
 var port int = [port];
 f.Run(host, port, f.GetInstance())
@@ -88,7 +97,7 @@ f.Run(host, port, f.GetInstance())
 In the previous section, you use pre-built listeners.
 However, you can also make your own listeners.
 The following code is creating new PlayerJoin listener class and is registering it to PlayerJoinEvent.
-```
+```go
 package main
 
 import (

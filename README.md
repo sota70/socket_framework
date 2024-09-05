@@ -21,13 +21,12 @@ import (
 # How this framework works
 
 The framework consists of three elements.
-(1)Event, (2)Listener, and (3)Orchestrator.
+(1)Event, (2)Callback, and (3)Orchestrator.
 Event is a class that is called in the framework's logic and has information about event.
-It can have several listeners.
-Listener is a class that handles specific event.
-It can only have one event.
-Orchestrator is a class that manages all events, listeners and common states in the server.
-This framework has several pre-built events and listeners.
+Callback is a function that handles specific event.
+More than one callbacks can be added to one event.
+Orchestrator is a class that manages all events, callbacks and common states in the server.
+This framework has several pre-built events.
 For instance, ServerRecvMsgEvent.
 For example, the process that is receiving message from a client calls ServerRecvMsgEvent in the following code.
 ```go
@@ -45,10 +44,9 @@ orc.Call("recv_msg", &ServerRecvMsgEvent{
 # How to use this framework
 
 First, initialize Orchestrator.
-Second, make listeners.
-After that, register them to event.
+Second, register callback to event.
 Finally, register events to Orchestrator with an event name.
-All events have DisplayMessage property which is rendered in stdout every time a listener handles an event.
+All events have DisplayMessage property which is rendered in stdout every time a callback handles an event.
 If the event has 3 listeners and they all set some message to DisplayMessage, 3 different messages are rendered in stdout.
 
 ## Use this framework with Pre-built events

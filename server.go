@@ -14,7 +14,7 @@ const (
 )
 
 
-func recv(clientFd int, max_buf_size int, orc *Orchestrator) {
+func recv(clientFd int, max_buf_size int, orc *CallbackOrchestrator) {
 	var buf []byte
 	var readLen int
 	var err error
@@ -55,7 +55,7 @@ func handleInput() {
 		if err != nil {
 			continue
 		}
-		GetInstance().Call("input", &ServerInputEvent{
+		GetCBInstance().Call("input", &ServerInputEvent{
 			Input: input,
 			NeedsOutput: true,
 		})
@@ -89,7 +89,7 @@ func runServer(host [4]byte, port int) (int, error) {
 	return serverFd, nil
 }
 
-func Run(host [4]byte, port int, orc *Orchestrator) {
+func Run(host [4]byte, port int, orc *CallbackOrchestrator) {
 	var serverFd int
 	var clientFd int
 	var err error

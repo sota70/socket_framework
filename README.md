@@ -5,7 +5,6 @@ The framework is a event-driven framework which you don't have to care about whe
 
 # Installation
 
-Write this in go.mod<br>
 Execute this command in the root folder of your project.
 ```
 go get github.com/sota70/socket_framework

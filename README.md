@@ -49,195 +49,168 @@ Finally, register events to Orchestrator with an event name.
 All events have DisplayMessage property which is rendered in stdout every time a callback handles an event.
 If the event has 3 listeners and they all set some message to DisplayMessage, 3 different messages are rendered in stdout.
 
-## Use this framework with Pre-built events
+## How to implement your own callbacks
 
-You can use pre-built events and listeners.
-Register them to Orchestrator in the following code.
+In this section, you will learn how to implement your own callbacks.
+There are 4 callbacks you must implement.
+- PlayerJoin callback
+- PlayerLeave callback
+- ServerInput callback
+- RecvMsg callback
+PlayerJoin callback is called when a new client joins the server.
+PlayerLeave callback is called when a client leaves the server.
+ServerInput callback is called when the server receives user input from server admin.
+RecvMsg callback is called when the server receives a message from a client.
+
+### Make your own PlayerJoin callback
+
+The following code is creating new PlayerJoin callback.
 ```go
-package main
-
-import (
-	f "github.com/sota70/socket_framework"
-)
-
-
-f.GetInstance().Init()
-var joinEvent f.PlayerJoinEvent = f.PlayerJoinEvent{}
-var joinListener f.PlayerJoinEventListener = f.PlayerJoinEventListener{
-	E: &joinEvent,
-}
-joinEvent.Register(&joinListener)
-
-var leaveEvent f.PlayerLeaveEvent = f.PlayerLeaveEvent{}
-var leaveListener f.PlayerLeaveEventListener = f.PlayerLeaveEventListener{
-	E: &leaveEvent,
-}
-leaveEvent.Register(&leaveListener)
-
-var recvEvent f.ServerRecvMsgEvent = f.ServerRecvMsgEvent{}
-var recvListener f.ServerRecvMsgEventListener = f.ServerRecvMsgEventListener{
-	E: &recvEvent,
-}
-recvEvent.Register(&recvListener)
-
-var inputEvent f.ServerInputEvent = f.ServerInputEvent{}
-var inputListener f.ServerInputEventListener = f.ServerInputEventListener{
-	E: &inputEvent,
-}
-inputEvent.Register(&inputListener)
-
-f.GetInstance().Register("player_join", &joinEvent)
-f.GetInstance().Register("player_leave", &leaveEvent)
-f.GetInstance().Register("recv_msg", &recvEvent)
-f.GetInstance().Register("input", &inputEvent)
-```
-After you register them, run the server with following code.
-```go
-var host [4]byte = [4]byte{127, 0, 0, 1}
-var port int = [port];
-f.Run(host, port, f.GetInstance())
-```
-
-## Use your own listener
-
-In the previous section, you use pre-built listeners.
-However, you can also make your own listeners.
-
-### Make your own PlayerJoin listener
-
-The following code is creating new PlayerJoin listener class and is registering it to PlayerJoinEvent.
-```go
-package main
-
-import (
-	"fmt"
-
-	f "github.com/sota70/socket_framework"
-)
-
-type SamplePlayerJoinListener struct {
-	Event *f.PlayerJoinEvent
-}
-
-func (listener *SamplePlayerJoinListener) Listen() {
-	listener.Event.DisplayMessage = fmt.Sprintf("[LOG]Client %d has joined the server", listener.Event.NewFd)
-}
-
-func main() {
-  f.GetInstance().Init()
-  var joinEvent f.PlayerJoinEvent = f.PlayerJoinEvent {}
-  var joinListener SamplePlayerJoinListener = SamplePlayerJoinListener {
-    Event: &joinEvent,
-  }
-  joinEvent.Register(&joinListener)
-
-  f.GetInstance().Register("join", &joinEvent)
-}
-```
-
-### Make your own PlayerLeave listener
-
-The following code is creating new PlayerLeave listener class and is registering it to PlayerLeaveEvent.
-```go
-package main
-
-import (
-	"fmt"
-
-	f "github.com/sota70/socket_framework"
-)
-
-type SamplePlayerLeaveListener struct {
-	Event *f.PlayerLeaveEvent
-}
-
-func (listener *SamplePlayerLeaveListener) Listen() {
-        listener.Event.DisplayMessage = fmt.Sprintf("[LOG]Client %d has left the server", listener.Event.LeftFd)
-}
-
-func main() {
-  f.GetInstance().Init()
-  var leaveEvent f.PlayerLeaveEvent = f.PlayerLeaveEvent {}
-  var leaveListener SamplePlayerLeaveListener = SamplePlayerLeaveListener {
-    Event: &leaveEvent,
-  }
-  leaveEvent.Register(&leaveListener)
-
-  f.GetInstance().Register("leave", &leaveEvent)
-}
-```
-
-### Make your own ServerRecvMsgEvent listener
-
-The following code is creating new ServerRecvMsgEvent listener class and is registering it to ServerRecvMsgEvent.
-```go
-package main
-
-import (
-	"fmt"
-	"golang.org/x/sys/unix"
-	f "github.com/sota70/socket_framework"
-)
-
-type SampleServerRecvMsgListener struct {
-	Event *f.ServerRecvMsgEvent
-}
-
-func (listener *SampleServerRecvMsgListener) Listen() {
-	listener.Event.DisplayMessage = fmt.Sprintf(
-		"[Sample][%d] > %s",
-		listener.Event.Src,
-		strings.ReplaceAll(listener.Event.RecvMsg, "\n", ""),
-	)
-}
-
-func main() {
-	f.GetInstance().Init()
-	var recvEvent f.ServerRecvMsgEvent = f.ServerRecvMsgEvent{}
-	var sampleRecvListener = SampleServerRecvMsgListener{
-		Event: &recvEvent,
+var cborc = socket_framework.GetCBInstance()
+cborc.Register("player_join", func (e socket_framework.IEvent) string {
+	if event, ok := e.(*socket_framework.PlayerJoinEvent); ok {
+		socket_framework.GetCBInstance().Fds = append(socket_framework.GetCBInstance().Fds, event.NewFd)
+		return fmt.Sprintf("%d has joined the server", event.NewFd)
 	}
-	recvEvent.Register(&sampleRecvListener)
-	orc.Register("recv_msg", &recvEvent)
+	return ""
+})
+```
+
+### Make your own PlayerLeave callback
+
+The following code is creating new PlayerLeave callback.
+```go
+var cborc = socket_framework.GetCBInstance()
+cborc.Register("player_leave", func (e socket_framework.IEvent) string {
+	if event, ok := e.(*socket_framework.PlayerLeaveEvent); ok {
+		var cborc = socket_framework.GetCBInstance()
+		unix.Close(event.LeftFd)
+		for i, fd := range cborc.Fds {
+			if fd == event.LeftFd {
+				cborc.Fds = append(cborc.Fds[:i], cborc.Fds[i + 1:]...)
+				break
+			}
+		}
+		return fmt.Sprintf("%d has left the server", event.LeftFd)
+	}
+	return ""
+})
+```
+
+### Make your own ServerInput callback
+
+The following code is creating new ServerInput callback.
+```go
+var cborc = socket_framework.GetCBInstance()
+cborc.Register("input", func (e socket_framework.IEvent) string {
+	if event, ok := e.(*socket_framework.ServerInputEvent); ok {
+		var cborc = socket_framework.GetCBInstance()
+		if event.Input == "q" || event.Input == "quit" {
+			for _, fd := range cborc.Fds {
+				unix.Close(fd)
+			}
+			unix.Close(cborc.ServerFd)
+			os.Exit(0)
+			return ""
+		}
+		for _, fd := range cborc.Fds {
+			unix.Send(fd, []byte(fmt.Sprintf("[server] > %s\n", event.Input)), 0)
+		}
+		return ""
+	}
+	return ""
 }
 ```
 
-### Make your own ServerInputEvent listener
+### Make your own RecvMsg callback
 
-The following code is creating new ServerInputEvent listener class and is registering it to ServerInputEvent.
+The following code is creating new RecvMsg callback.
+```go
+var cborc = socket_framework.GetCBInstance()
+cborc.Register("recv_msg", func (e socket_framework.IEvent) string {
+	if event, ok := e.(*socket_framework.ServerRecvMsgEvent); ok {
+		return fmt.Sprintf(
+			"[%d] > %s",
+			event.Src,
+			strings.ReplaceAll(event.RecvMsg, "\n", ""),
+		)
+	}
+	return ""
+})
+```
+
+## Sample Program
+
+This is a sample server program using the framework.
 ```go
 package main
 
 import (
 	"fmt"
 	"os"
-	"golang.org/x/sys/unix"
+	"strings"
+
 	f "github.com/sota70/socket_framework"
+	"golang.org/x/sys/unix"
 )
 
-type SampleInputListener {
-	Event *f.ServerInputEvent
-}
-
-func (listener *SampleInputListener) Listen() {
-	if listener.Event.Input == "s" || listener.E.Input == "stop" {
-		for fd := range f.GetInstance().Fds {
-			unix.Close(fd)
+func registerCBEvents() {
+	var cborc = f.GetCBInstance()
+	cborc.Register("player_join", func (e f.IEvent) string {
+		if event, ok := e.(*f.PlayerJoinEvent); ok {
+			f.GetCBInstance().Fds = append(f.GetCBInstance().Fds, event.NewFd)
+			return fmt.Sprintf("%d has joined the server", event.NewFd)
 		}
-		listener.Event.NeedsOutput = false
-		unix.Close(f.GetInstance().ServerFd)
-		os.Exit(0)
-		return
-	}
-	listener.Event.DisplayMessage = fmt.Sprintf("[Sample][server] > %s\n", listener.Event.Input)
+		return ""
+	})
+	cborc.Register("player_leave", func (e f.IEvent) string {
+		if event, ok := e.(*f.PlayerLeaveEvent); ok {
+			var cborc = f.GetCBInstance()
+			unix.Close(event.LeftFd)
+			for i, fd := range cborc.Fds {
+				if fd == event.LeftFd {
+					cborc.Fds = append(cborc.Fds[:i], cborc.Fds[i + 1:]...)
+					break
+				}
+			}
+			return fmt.Sprintf("%d has left the server", event.LeftFd)
+		}
+		return ""
+	})
+	cborc.Register("input", func (e f.IEvent) string {
+		if event, ok := e.(*f.ServerInputEvent); ok {
+			var cborc = f.GetCBInstance()
+			if event.Input == "q" || event.Input == "quit" {
+				for _, fd := range cborc.Fds {
+					unix.Close(fd)
+				}
+				unix.Close(cborc.ServerFd)
+				os.Exit(0)
+				return ""
+			}
+			for _, fd := range cborc.Fds {
+				unix.Send(fd, []byte(fmt.Sprintf("[server] > %s\n", event.Input)), 0)
+			}
+			return ""
+		}
+		return ""
+	})
+	cborc.Register("recv_msg", func (e f.IEvent) string {
+		if event, ok := e.(*f.ServerRecvMsgEvent); ok {
+			return fmt.Sprintf(
+				"[%d] > %s",
+				event.Src,
+				strings.ReplaceAll(event.RecvMsg, "\n", ""),
+			)
+		}
+		return ""
+	})
 }
 
 func main() {
-	var inputEvent f.ServerInputEvent = f.ServerInputEvent{}
-	var sampleInputListener f.SampleInputListener = SampleInputListener{
-		Event: &inputEvent,
-	}
-	inputEvent.Register(&sampleInputListener)
-	f.GetInstance().Register("input", &inputEvent)
+	var cborc = f.GetCBInstance()
+	cborc.Init()
+	registerCBEvents()
+	f.Run([4]byte{127, 0, 0, 1}, 1337, cborc)
 }
 ```

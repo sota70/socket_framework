@@ -1,11 +1,11 @@
 # Overview
 
-This is a socket server framework that is written in Go.
+This is a socket server framework that is written in Go.<br>
 The framework is a event-driven framework which you don't have to care about where to write code and when to execute code.
 
 # Installation
 
-Write this in go.mod
+Write this in go.mod<br>
 Execute this command in the root folder of your project.
 ```
 go get github.com/sota70/socket_framework
@@ -20,14 +20,14 @@ import (
 
 # How this framework works
 
-The framework consists of three elements.
-(1)Event, (2)Callback, and (3)Orchestrator.
-Event is a class that is called in the framework's logic and has information about event.
-Callback is a function that handles specific event.
-More than one callbacks can be added to one event.
-Orchestrator is a class that manages all events, callbacks and common states in the server.
-This framework has several pre-built events.
-For instance, ServerRecvMsgEvent.
+The framework consists of three elements.<br>
+(1)Event, (2)Callback, and (3)Orchestrator.<br>
+Event is a class that is called in the framework's logic and has information about event.<br>
+Callback is a function that handles specific event.<br>
+More than one callbacks can be added to one event.<br>
+Orchestrator is a class that manages all events, callbacks and common states in the server.<br>
+This framework has several pre-built events.<br>
+For instance, ServerRecvMsgEvent.<br>
 For example, the process that is receiving message from a client calls ServerRecvMsgEvent in the following code.
 ```go
 buf = make([]byte, max_buf_size)
@@ -43,23 +43,24 @@ orc.Call("recv_msg", &ServerRecvMsgEvent{
 
 # How to use this framework
 
-First, initialize Orchestrator.
-Second, register callback to event.
-Finally, register events to Orchestrator with an event name.
-All events have DisplayMessage property which is rendered in stdout every time a callback handles an event.
+First, initialize Orchestrator.<br>
+Second, register callback to event.<br>
+Finally, register events to Orchestrator with an event name.<br>
+All events have DisplayMessage property which is rendered in stdout every time a callback handles an event.<br>
 If the event has 3 listeners and they all set some message to DisplayMessage, 3 different messages are rendered in stdout.
 
 ## How to implement your own callbacks
 
-In this section, you will learn how to implement your own callbacks.
-There are 4 callbacks you must implement.
-- PlayerJoin callback
-- PlayerLeave callback
-- ServerInput callback
-- RecvMsg callback
-PlayerJoin callback is called when a new client joins the server.
-PlayerLeave callback is called when a client leaves the server.
-ServerInput callback is called when the server receives user input from server admin.
+In this section, you will learn how to implement your own callbacks.<br>
+There are 4 callbacks you must implement.<br>
+- PlayerJoin callback<br>
+- PlayerLeave callback<br>
+- ServerInput callback<br>
+- RecvMsg callback<br>
+
+PlayerJoin callback is called when a new client joins the server.<br>
+PlayerLeave callback is called when a client leaves the server.<br>
+ServerInput callback is called when the server receives user input from server admin.<br>
 RecvMsg callback is called when the server receives a message from a client.
 
 ### Make your own PlayerJoin callback
